@@ -1,23 +1,62 @@
 services:
-  cassandra:
+  cassandra-asia:
     image: cassandra:4.1
-    container_name: cassandra
+    container_name: cassandra-asia
     restart: unless-stopped
     environment:
       - CASSANDRA_CLUSTER_NAME=TestCluster
-      - CASSANDRA_SEEDS=cassandra
+      - CASSANDRA_DC=Asia
+      - CASSANDRA_RACK=RAC1
+      - CASSANDRA_SEEDS=cassandra-asia,cassandra-europe,cassandra-america
       - MAX_HEAP_SIZE=512M
       - HEAP_NEWSIZE=100M
     ports:
-      - "9042:9042" 
-      - "7000:7000" 
+      - "9042:9042"
     volumes:
-      - cassandra-data:/var/lib/cassandra
+      - cassandra-asia-data:/var/lib/cassandra
+    networks:
+      - cassandra-net
+
+  cassandra-europe:
+    image: cassandra:4.1
+    container_name: cassandra-europe
+    restart: unless-stopped
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=Europe
+      - CASSANDRA_RACK=RAC1
+      - CASSANDRA_SEEDS=cassandra-asia,cassandra-europe,cassandra-america
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100M
+    ports:
+      - "9043:9042"
+    volumes:
+      - cassandra-europe-data:/var/lib/cassandra
+    networks:
+      - cassandra-net
+
+  cassandra-america:
+    image: cassandra:4.1
+    container_name: cassandra-america
+    restart: unless-stopped
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=America
+      - CASSANDRA_RACK=RAC1
+      - CASSANDRA_SEEDS=cassandra-asia,cassandra-europe,cassandra-america
+      - MAX_HEAP_SIZE=512M
+      - HEAP_NEWSIZE=100M
+    ports:
+      - "9044:9042"
+    volumes:
+      - cassandra-america-data:/var/lib/cassandra
     networks:
       - cassandra-net
 
 volumes:
-  cassandra-data:
+  cassandra-asia-data:
+  cassandra-europe-data:
+  cassandra-america-data:
 
 networks:
   cassandra-net:

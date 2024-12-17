@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	cassandraClient, err := db.NewCassandraClient([]string{"localhost"})
+	cassandraClient, err := db.NewCassandraClient([]string{"127.0.0.1:9042", "127.0.0.1:9043", "127.0.0.1:9044"})
 	if err != nil {
 		log.Fatalf("Failed to create Cassandra client: %v", err)
 	}

@@ -46,7 +46,7 @@ func (m *CassandraMigration) createKeyspace() error {
 		CREATE KEYSPACE IF NOT EXISTS kv_store_app 
 		WITH replication = {
 			'class': 'NetworkTopologyStrategy', 
-			'replication_factor': 1
+			'replication_factor': 3
 		}
 	`
 	return m.session.Query(query).Exec()
@@ -81,7 +81,7 @@ func (m *CassandraMigration) Close() {
 }
 
 func main() {
-	migration, err := NewCassandraMigration([]string{"localhost"})
+	migration, err := NewCassandraMigration([]string{"localhost:9042", "localhost:9043", "localhost:9044"})
 	if err != nil {
 		log.Fatalf("Failed to create migration: %v", err)
 	}
