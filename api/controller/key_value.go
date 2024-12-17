@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/keanutaufan/kvstored/api/dto"
@@ -33,9 +34,10 @@ func (c *keyValueController) Set(ctx *gin.Context) {
 	}
 
 	keyValue := entity.KeyValue{
-		AppID: req.AppID,
-		Key:   req.Key,
-		Value: req.Value,
+		AppID:     req.AppID,
+		Key:       req.Key,
+		Value:     req.Value,
+		CreatedAt: time.Now(),
 	}
 
 	if err := c.keyValueService.Set(ctx.Request.Context(), keyValue); err != nil {
