@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -69,9 +68,7 @@ func (c *keyValueController) Set(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.kafkaService.PublishKeyChange("set", keyValue.AppID, keyValue.Key, &keyValue); err != nil {
-		log.Printf("Error publishing Kafka message: %v", err)
-	}
+	c.kafkaService.AsyncPublishKeyChange("set", keyValue.AppID, keyValue.Key, &keyValue)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
@@ -112,9 +109,7 @@ func (c *keyValueController) Update(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.kafkaService.PublishKeyChange("update", keyValue.AppID, keyValue.Key, &keyValue); err != nil {
-		log.Printf("Error publishing Kafka message: %v", err)
-	}
+	c.kafkaService.AsyncPublishKeyChange("update", keyValue.AppID, keyValue.Key, &keyValue)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
@@ -128,9 +123,7 @@ func (c *keyValueController) Delete(ctx *gin.Context) {
 		return
 	}
 
-	if err := c.kafkaService.PublishKeyChange("delete", appID, key, nil); err != nil {
-		log.Printf("Error publishing Kafka message: %v", err)
-	}
+	c.kafkaService.AsyncPublishKeyChange("delete", appID, key, nil)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }

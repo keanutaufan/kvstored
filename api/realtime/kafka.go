@@ -76,7 +76,6 @@ func (k *KafkaService) StartConsumer(socketServer *SocketServer) {
 			continue
 		}
 
-		// Process message and notify Socket.IO clients
 		switch keyChange.Type {
 		case "set":
 			if keyChange.Value != nil {
@@ -90,6 +89,14 @@ func (k *KafkaService) StartConsumer(socketServer *SocketServer) {
 			socketServer.NotifyKeyDeleted(keyChange.AppID, keyChange.Key)
 		}
 	}
+}
+
+func (k *KafkaService) AsyncPublishKeyChange(msgType string, appID, key string, value *entity.KeyValue) {
+	go func() {
+		if err := k.PublishKeyChange(msgType, appID, key, value); err != nil {
+			log.Printf("Error publishing Kafka message: %v", err)
+		}
+	}()
 }
 
 func (k *KafkaService) Close() error {
