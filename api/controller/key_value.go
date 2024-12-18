@@ -68,7 +68,7 @@ func (c *keyValueController) Set(ctx *gin.Context) {
 		return
 	}
 
-	c.socketServer.NotifyKeyCreated(keyValue)
+	c.socketServer.NotifyKeySet(keyValue)
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 

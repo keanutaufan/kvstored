@@ -110,14 +110,23 @@ func NewSocketServer() *SocketServer {
 	return s
 }
 
-func (s *SocketServer) NotifyKeyCreated(keyValue entity.KeyValue) {
+func (s *SocketServer) NotifyKeySet(keyValue entity.KeyValue) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Notify app subscribers about new key
+	// Notify key-specific subscribers
+	if appSubs, ok := s.keySubs[keyValue.AppID]; ok {
+		if clients, ok := appSubs[keyValue.Key]; ok {
+			for _, so := range clients {
+				so.Emit("key_set", keyValue)
+			}
+		}
+	}
+
+	// Notify app subscribers
 	if clients, ok := s.appSubs[keyValue.AppID]; ok {
 		for _, so := range clients {
-			so.Emit("key_created", keyValue)
+			so.Emit("key_set", keyValue)
 		}
 	}
 }
