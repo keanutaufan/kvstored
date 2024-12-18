@@ -4,6 +4,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/gin-gonic/gin"
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/keanutaufan/kvstored/api/entity"
 )
@@ -109,23 +110,62 @@ func NewSocketServer() *SocketServer {
 	return s
 }
 
-func (s *SocketServer) NotifyKeyChange(keyValue entity.KeyValue) {
+func (s *SocketServer) NotifyKeyCreated(keyValue entity.KeyValue) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Notify subscribers of the specific key in the specific app
+	// Notify app subscribers about new key
+	if clients, ok := s.appSubs[keyValue.AppID]; ok {
+		for _, so := range clients {
+			so.Emit("key_created", keyValue)
+		}
+	}
+}
+
+func (s *SocketServer) NotifyKeyUpdated(keyValue entity.KeyValue) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Notify key-specific subscribers
 	if appSubs, ok := s.keySubs[keyValue.AppID]; ok {
 		if clients, ok := appSubs[keyValue.Key]; ok {
 			for _, so := range clients {
-				so.Emit("key_changed", keyValue)
+				so.Emit("key_updated", keyValue)
 			}
 		}
 	}
 
-	// Notify subscribers of the app
+	// Notify app subscribers
 	if clients, ok := s.appSubs[keyValue.AppID]; ok {
 		for _, so := range clients {
-			so.Emit("key_changed", keyValue)
+			so.Emit("key_updated", keyValue)
+		}
+	}
+}
+
+func (s *SocketServer) NotifyKeyDeleted(appID, key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Notify key-specific subscribers
+	if appSubs, ok := s.keySubs[appID]; ok {
+		if clients, ok := appSubs[key]; ok {
+			for _, so := range clients {
+				so.Emit("key_deleted", gin.H{
+					"app_id": appID,
+					"key":    key,
+				})
+			}
+		}
+	}
+
+	// Notify app subscribers
+	if clients, ok := s.appSubs[appID]; ok {
+		for _, so := range clients {
+			so.Emit("key_deleted", gin.H{
+				"app_id": appID,
+				"key":    key,
+			})
 		}
 	}
 }

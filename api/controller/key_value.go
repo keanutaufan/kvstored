@@ -68,6 +68,7 @@ func (c *keyValueController) Set(ctx *gin.Context) {
 		return
 	}
 
+	c.socketServer.NotifyKeyCreated(keyValue)
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
@@ -107,8 +108,7 @@ func (c *keyValueController) Update(ctx *gin.Context) {
 		return
 	}
 
-	c.socketServer.NotifyKeyChange(keyValue)
-
+	c.socketServer.NotifyKeyUpdated(keyValue)
 	ctx.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
 
@@ -121,5 +121,6 @@ func (c *keyValueController) Delete(ctx *gin.Context) {
 		return
 	}
 
+	c.socketServer.NotifyKeyDeleted(appID, key)
 	ctx.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
