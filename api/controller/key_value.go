@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/keanutaufan/kvstored/api/dto"
 	"github.com/keanutaufan/kvstored/api/entity"
+	"github.com/keanutaufan/kvstored/api/realtime"
 	"github.com/keanutaufan/kvstored/api/service"
 )
 
@@ -20,10 +21,14 @@ type KeyValueController interface {
 
 type keyValueController struct {
 	keyValueService service.KeyValueService
+	socketServer    *realtime.SocketServer
 }
 
-func NewKeyValueController(keyValueService service.KeyValueService) *keyValueController {
-	return &keyValueController{keyValueService: keyValueService}
+func NewKeyValueController(keyValueService service.KeyValueService, socketServer *realtime.SocketServer) *keyValueController {
+	return &keyValueController{
+		keyValueService: keyValueService,
+		socketServer:    socketServer,
+	}
 }
 
 func (c *keyValueController) GetAll(ctx *gin.Context) {
@@ -101,6 +106,8 @@ func (c *keyValueController) Update(ctx *gin.Context) {
 		}
 		return
 	}
+
+	c.socketServer.NotifyKeyChange(keyValue)
 
 	ctx.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
