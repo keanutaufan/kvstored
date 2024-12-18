@@ -11,6 +11,7 @@ import (
 )
 
 type KeyValueController interface {
+	GetAll(ctx *gin.Context)
 	Set(ctx *gin.Context)
 	Get(ctx *gin.Context)
 	Update(ctx *gin.Context)
@@ -23,6 +24,23 @@ type keyValueController struct {
 
 func NewKeyValueController(keyValueService service.KeyValueService) *keyValueController {
 	return &keyValueController{keyValueService: keyValueService}
+}
+
+func (c *keyValueController) GetAll(ctx *gin.Context) {
+	appID := ctx.Param("app_id")
+
+	keyValues, err := c.keyValueService.GetAll(ctx.Request.Context(), appID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(keyValues) == 0 {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "no keys found for the given app"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, keyValues)
 }
 
 func (c *keyValueController) Set(ctx *gin.Context) {

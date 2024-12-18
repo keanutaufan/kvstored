@@ -9,6 +9,7 @@ import (
 )
 
 type KeyValueService interface {
+	GetAll(ctx context.Context, appID string) ([]entity.KeyValue, error)
 	Set(ctx context.Context, keyValue entity.KeyValue) error
 	Get(ctx context.Context, appID, key string) (entity.KeyValue, error)
 	Update(ctx context.Context, keyValue entity.KeyValue) error
@@ -21,6 +22,13 @@ type keyValueService struct {
 
 func NewKeyValueService(kvRepository repository.KeyValueRepository) *keyValueService {
 	return &keyValueService{kvRepository: kvRepository}
+}
+
+func (s *keyValueService) GetAll(ctx context.Context, appID string) ([]entity.KeyValue, error) {
+	if appID == "" {
+		return nil, errors.New("app_id cannot be empty")
+	}
+	return s.kvRepository.GetAll(ctx, appID)
 }
 
 func (s *keyValueService) Set(ctx context.Context, keyValue entity.KeyValue) error {

@@ -11,6 +11,7 @@ import (
 )
 
 type KeyValueRepository interface {
+	GetAll(ctx context.Context, appID string) ([]entity.KeyValue, error)
 	Set(ctx context.Context, keyValue entity.KeyValue) error
 	Get(ctx context.Context, appID, key string) (entity.KeyValue, error)
 	Update(ctx context.Context, keyValue entity.KeyValue) error
@@ -23,6 +24,27 @@ type keyValueRepository struct {
 
 func NewKeyValueRepository(client *db.CassandraClient) KeyValueRepository {
 	return &keyValueRepository{client: client}
+}
+
+// Add to repository/key_value.go
+func (r *keyValueRepository) GetAll(ctx context.Context, appID string) ([]entity.KeyValue, error) {
+	var keyValues []entity.KeyValue
+	iter := r.client.Session.Query(`
+        SELECT app_id, key, value, created_at 
+        FROM kv_store_app.key_values 
+        WHERE app_id = ?
+    `, appID).WithContext(ctx).Iter()
+
+	var kv entity.KeyValue
+	for iter.Scan(&kv.AppID, &kv.Key, &kv.Value, &kv.CreatedAt) {
+		keyValues = append(keyValues, kv)
+	}
+
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+
+	return keyValues, nil
 }
 
 func (r *keyValueRepository) Set(ctx context.Context, keyValue entity.KeyValue) error {
