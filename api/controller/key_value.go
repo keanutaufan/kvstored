@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -21,13 +22,13 @@ type KeyValueController interface {
 
 type keyValueController struct {
 	keyValueService service.KeyValueService
-	socketServer    *realtime.SocketServer
+	kafkaService    *realtime.KafkaService
 }
 
-func NewKeyValueController(keyValueService service.KeyValueService, socketServer *realtime.SocketServer) *keyValueController {
+func NewKeyValueController(keyValueService service.KeyValueService, kafkaService *realtime.KafkaService) *keyValueController {
 	return &keyValueController{
 		keyValueService: keyValueService,
-		socketServer:    socketServer,
+		kafkaService:    kafkaService,
 	}
 }
 
@@ -68,7 +69,10 @@ func (c *keyValueController) Set(ctx *gin.Context) {
 		return
 	}
 
-	c.socketServer.NotifyKeySet(keyValue)
+	if err := c.kafkaService.PublishKeyChange("set", keyValue.AppID, keyValue.Key, &keyValue); err != nil {
+		log.Printf("Error publishing Kafka message: %v", err)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
@@ -108,7 +112,10 @@ func (c *keyValueController) Update(ctx *gin.Context) {
 		return
 	}
 
-	c.socketServer.NotifyKeyUpdated(keyValue)
+	if err := c.kafkaService.PublishKeyChange("update", keyValue.AppID, keyValue.Key, &keyValue); err != nil {
+		log.Printf("Error publishing Kafka message: %v", err)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"status": "updated"})
 }
 
@@ -121,6 +128,9 @@ func (c *keyValueController) Delete(ctx *gin.Context) {
 		return
 	}
 
-	c.socketServer.NotifyKeyDeleted(appID, key)
+	if err := c.kafkaService.PublishKeyChange("delete", appID, key, nil); err != nil {
+		log.Printf("Error publishing Kafka message: %v", err)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }

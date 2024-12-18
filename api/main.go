@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/keanutaufan/kvstored/api/controller"
@@ -23,18 +24,30 @@ func main() {
 
 	defer cassandraClient.Session.Close()
 
-	server := gin.Default()
-	socketServer := realtime.NewSocketServer()
+	nodeId := os.Getenv("NODE_ID")
+	if nodeId == "" {
+		nodeId = "kvstored1"
+	}
+	kafkaService := realtime.NewKafkaService([]string{"localhost:9092"}, "kvstored-group-"+nodeId)
+	defer kafkaService.Close()
 
+	socketServer := realtime.NewSocketServer()
 	go socketServer.Server.Serve()
 	defer socketServer.Server.Close()
 
-	keyValueController := controller.NewKeyValueController(keyValueService, socketServer)
+	go kafkaService.StartConsumer(socketServer)
 
+	keyValueController := controller.NewKeyValueController(keyValueService, kafkaService)
+
+	server := gin.Default()
 	routes.KeyValueRoutes(server, keyValueController)
 
 	server.GET("/socket.io/*any", gin.WrapH(socketServer.Server))
 	server.POST("/socket.io/*any", gin.WrapH(socketServer.Server))
 
-	server.Run(":8000")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	server.Run(":" + port)
 }
