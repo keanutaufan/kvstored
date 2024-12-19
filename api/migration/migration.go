@@ -3,8 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/gocql/gocql"
+	"github.com/joho/godotenv"
+	"github.com/keanutaufan/kvstored/api/utils"
 )
 
 type CassandraMigration struct {
@@ -81,7 +85,15 @@ func (m *CassandraMigration) Close() {
 }
 
 func main() {
-	migration, err := NewCassandraMigration([]string{"localhost:9042", "localhost:9043", "localhost:9044"})
+	if os.Getenv("APP_ENV") != "production" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	cqlHosts := utils.LoadEnv("CASSANDRA_HOSTS", "localhost")
+	migration, err := NewCassandraMigration(strings.Split(cqlHosts, ","))
 	if err != nil {
 		log.Fatalf("Failed to create migration: %v", err)
 	}
