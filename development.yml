@@ -67,7 +67,7 @@ services:
 
       # Listener configs
       KAFKA_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://0.0.0.0:9092,CONTROLLER://kafka:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
@@ -84,51 +84,6 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - kafka-data:/var/lib/kafka/data
-    networks:
-      - cassandra-net
-
-  kvstored1:
-    build: api/
-    container_name: kvstored1
-    restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - PORT=8000
-      - NODE_ID=kvstored1
-      - CASSANDRA_HOSTS=cassandra-asia,cassandra-europe,cassandra-america
-      - KAFKA_HOSTS=kafka
-    ports:
-      - "8001:8000"
-    networks:
-      - cassandra-net
-
-  kvstored2:
-    build: api/
-    container_name: kvstored2
-    restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - PORT=8000
-      - NODE_ID=kvstored2
-      - CASSANDRA_HOSTS=cassandra-asia,cassandra-europe,cassandra-america
-      - KAFKA_HOSTS=kafka
-    ports:
-      - "8002:8000"
-    networks:
-      - cassandra-net
-
-  kvstored3:
-    build: api/
-    container_name: kvstored3
-    restart: unless-stopped
-    environment:
-      - APP_ENV=production
-      - PORT=8000
-      - NODE_ID=kvstored3
-      - CASSANDRA_HOSTS=cassandra-asia,cassandra-europe,cassandra-america
-      - KAFKA_HOSTS=kafka
-    ports:
-      - "8003:8000"
     networks:
       - cassandra-net
 

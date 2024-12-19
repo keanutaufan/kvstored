@@ -1,0 +1,44 @@
+# Version control
+.git
+.gitignore
+
+# Build artifacts
+tmp/
+temp/
+
+# IDE files
+.idea/
+.vscode/
+
+# Testing files
+**/*_test.go
+**/testdata/
+
+# Docker files
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Docs and misc
+README.md
+LICENSE
+*.md
+
+# Environment files (except example)
+.env
+!.env.example
+
+# Binary files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Debug files
+*.out
+debug/
+
+# Go build and test cache
+*.test
+vendor/
