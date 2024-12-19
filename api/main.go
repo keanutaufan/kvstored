@@ -3,18 +3,29 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/keanutaufan/kvstored/api/controller"
 	"github.com/keanutaufan/kvstored/api/db"
 	"github.com/keanutaufan/kvstored/api/realtime"
 	"github.com/keanutaufan/kvstored/api/repository"
 	"github.com/keanutaufan/kvstored/api/routes"
 	"github.com/keanutaufan/kvstored/api/service"
+	"github.com/keanutaufan/kvstored/api/utils"
 )
 
 func main() {
-	cassandraClient, err := db.NewCassandraClient([]string{"127.0.0.1:9042", "127.0.0.1:9043", "127.0.0.1:9044"})
+	if os.Getenv("APP_ENV") != "production" {
+		err := godotenv.Load(".env")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	cqlHosts := utils.LoadEnv("CASSANDRA_HOSTS", "localhost")
+	cassandraClient, err := db.NewCassandraClient(strings.Split(cqlHosts, ","))
 	if err != nil {
 		log.Fatalf("Failed to create Cassandra client: %v", err)
 	}
@@ -24,11 +35,9 @@ func main() {
 
 	defer cassandraClient.Session.Close()
 
-	nodeId := os.Getenv("NODE_ID")
-	if nodeId == "" {
-		nodeId = "kvstored1"
-	}
-	kafkaService := realtime.NewKafkaService([]string{"localhost:9092"}, "kvstored-group-"+nodeId)
+	nodeId := utils.LoadEnv("NODE_ID", "kvstored1")
+	kafkaHosts := utils.LoadEnv("KAFKA_HOSTS", "localhost")
+	kafkaService := realtime.NewKafkaService(strings.Split(kafkaHosts, ","), "kvstored-group-"+nodeId)
 	defer kafkaService.Close()
 
 	socketServer := realtime.NewSocketServer()
@@ -45,9 +54,6 @@ func main() {
 	server.GET("/socket.io/*any", gin.WrapH(socketServer.Server))
 	server.POST("/socket.io/*any", gin.WrapH(socketServer.Server))
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8000"
-	}
+	port := utils.LoadEnv("PORT", "8000")
 	server.Run(":" + port)
 }
